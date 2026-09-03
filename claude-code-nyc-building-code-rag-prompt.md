@@ -52,7 +52,7 @@ Start with ONLY the 2022 **Building Code** PDF. Assume the PDF is placed in `./d
 
 ### Phase 5 — API + UI
 - FastAPI endpoint: `POST /ask` → `{ question }` returns `{ answer, sources[], confidence }`.
-- Streamlit UI: question box → answer + expandable cited sections + confidence + disclaimer.
+- React UI: question box → answer + expandable cited sections + confidence + disclaimer.
 
 ### Phase 6 — Ops
 - Log every interaction to a local file or SQLite (`./logs/`).
@@ -69,7 +69,7 @@ nyc-code-rag/
 │   ├── retrieve.py      # Phase 3
 │   ├── generate.py      # Phase 4
 │   ├── api.py           # Phase 5 (FastAPI)
-│   └── app.py           # Phase 5 (Streamlit)
+│   └── app.py           # Phase 5 (React)
 ├── logs/
 ├── tests/
 ├── .env.example
@@ -85,4 +85,4 @@ nyc-code-rag/
 - Keep code clean and commented. Ask before adding any dependency not listed above.
 
 ## Definition of done
-End-to-end: I place the Building Code PDF in `data/raw/`, run docker-compose, open the Streamlit UI, ask "What is the minimum required occupant load for..." and get a plain-language answer that cites the exact section number(s), with a confidence score, sources shown, and the interaction logged.
+End-to-end: I place the Building Code PDF in `data/raw/`, run docker-compose, open the React UI, ask "What is the minimum required occupant load for..." and get a plain-language answer that cites the exact section number(s), with a confidence score, sources shown, and the interaction logged.
