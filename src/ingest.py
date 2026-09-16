@@ -57,12 +57,6 @@ _RE_CHAPTER = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
-# Section block header: "SECTION 1601" (some chapters use this)
-_RE_SECTION_BLOCK = re.compile(
-    r"^SECTION\s+(\d{4})\b",
-    re.IGNORECASE | re.MULTILINE,
-)
-
 # Numbered section: 1601.1, 1601.1.1, 1601.1.1.1
 # Followed by at least one word character (the title)
 _RE_SECTION = re.compile(
@@ -70,8 +64,6 @@ _RE_SECTION = re.compile(
     re.MULTILINE,
 )
 
-# Top-level section (e.g. 1601.1 but not 1601.1.1)
-_RE_TOP_SECTION = re.compile(r"^\d{4}\.\d+$")
 
 
 # ---------------------------------------------------------------------------
