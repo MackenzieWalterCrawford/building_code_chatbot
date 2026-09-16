@@ -128,10 +128,18 @@ def _clean_line(line: str) -> str:
 
 
 def pages_to_text(pages: list[dict]) -> list[tuple[int, str]]:
-    """Return [(page_num, cleaned_line), ...] preserving page attribution."""
+    """Return [(page_num, cleaned_line), ...] preserving page attribution.
+
+    Blank lines are kept as empty-string entries (rather than dropped) so
+    the `\\n\\n` paragraph boundaries in the source PDF survive into the
+    section body text the chunker later splits on.
+    """
     result = []
     for p in pages:
         for line in p["text"].splitlines():
+            if not line.strip():
+                result.append((p["page_num"], ""))
+                continue
             cleaned = _clean_line(line)
             if cleaned:
                 result.append((p["page_num"], cleaned))
@@ -211,27 +219,78 @@ def extract_sections(
 # Chunking: merge short / split long spans
 # ---------------------------------------------------------------------------
 
-def _split_on_paragraphs(text: str, max_tokens: int) -> list[str]:
-    """Split text at paragraph boundaries to stay under max_tokens."""
-    paragraphs = re.split(r"\n{2,}", text)
+_RE_PARAGRAPH_SEP = re.compile(r"\n{2,}")
+_RE_SENTENCE_SEP = re.compile(r"(?<=[.;:])\s+")
+
+
+def _hard_split_tokens(text: str, max_tokens: int) -> list[str]:
+    """Guaranteed fallback: slice the raw token stream into fixed windows.
+
+    Used when a piece has no paragraph or sentence boundaries at all
+    (e.g. a code table rendered as one dense block) — the only way left
+    to actually stay under max_tokens.
+    """
+    ids = _ENC.encode(text)
+    if not ids:
+        return [text]
+    return [_ENC.decode(ids[i : i + max_tokens]) for i in range(0, len(ids), max_tokens)]
+
+
+def _bin_pack(
+    pieces: list[str], max_tokens: int, joiner: str, next_level
+) -> list[str]:
+    """Greedily pack pieces into <=max_tokens groups, recursing into
+    next_level on any single piece that's still oversized on its own."""
     chunks: list[str] = []
-    current_parts: list[str] = []
+    current: list[str] = []
     current_toks = 0
 
-    for para in paragraphs:
-        para_toks = token_count(para)
-        if current_toks + para_toks > max_tokens and current_parts:
-            chunks.append("\n\n".join(current_parts))
-            current_parts = [para]
-            current_toks = para_toks
+    for piece in pieces:
+        piece_toks = token_count(piece)
+        if piece_toks > max_tokens:
+            if current:
+                chunks.append(joiner.join(current))
+                current, current_toks = [], 0
+            chunks.extend(next_level(piece, max_tokens))
+            continue
+        if current_toks + piece_toks > max_tokens and current:
+            chunks.append(joiner.join(current))
+            current, current_toks = [piece], piece_toks
         else:
-            current_parts.append(para)
-            current_toks += para_toks
+            current.append(piece)
+            current_toks += piece_toks
 
-    if current_parts:
-        chunks.append("\n\n".join(current_parts))
+    if current:
+        chunks.append(joiner.join(current))
 
-    return chunks or [text]
+    return chunks
+
+
+def _split_on_sentences(text: str, max_tokens: int) -> list[str]:
+    """Split text at sentence-ish boundaries; hard-split if that's not
+    enough (e.g. text with no terminal punctuation at all)."""
+    if token_count(text) <= max_tokens:
+        return [text]
+    sentences = [s for s in _RE_SENTENCE_SEP.split(text) if s.strip()]
+    if len(sentences) <= 1:
+        return _hard_split_tokens(text, max_tokens)
+    return _bin_pack(sentences, max_tokens, " ", _split_on_sentences)
+
+
+def _split_on_paragraphs(text: str, max_tokens: int) -> list[str]:
+    """Split text to keep every returned piece under max_tokens.
+
+    Recurses through progressively finer boundaries — paragraphs, then
+    sentences, then a hard token-count slice — so a section with no
+    paragraph breaks, or even no sentence breaks (dense tables), still
+    ends up under max_tokens instead of passing through unsplit.
+    """
+    if token_count(text) <= max_tokens:
+        return [text]
+    paragraphs = [p for p in _RE_PARAGRAPH_SEP.split(text) if p.strip()]
+    if len(paragraphs) <= 1:
+        return _split_on_sentences(text, max_tokens)
+    return _bin_pack(paragraphs, max_tokens, "\n\n", _split_on_sentences)
 
 
 def spans_to_chunks(
