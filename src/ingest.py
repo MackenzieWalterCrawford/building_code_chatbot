@@ -232,25 +232,30 @@ def _bin_pack(
     pieces: list[str], max_tokens: int, joiner: str, next_level
 ) -> list[str]:
     """Greedily pack pieces into <=max_tokens groups, recursing into
-    next_level on any single piece that's still oversized on its own."""
+    next_level on any single piece that's still oversized on its own.
+
+    Checks the token count of the actual joined candidate string (not the
+    sum of each piece's own count) so the joiner's own tokens count toward
+    the budget — otherwise a bucket of near-max pieces can tip over
+    max_tokens once `joiner.join(...)` adds its separators back in.
+    """
     chunks: list[str] = []
     current: list[str] = []
-    current_toks = 0
 
     for piece in pieces:
         piece_toks = token_count(piece)
         if piece_toks > max_tokens:
             if current:
                 chunks.append(joiner.join(current))
-                current, current_toks = [], 0
+                current = []
             chunks.extend(next_level(piece, max_tokens))
             continue
-        if current_toks + piece_toks > max_tokens and current:
+        candidate = current + [piece]
+        if current and token_count(joiner.join(candidate)) > max_tokens:
             chunks.append(joiner.join(current))
-            current, current_toks = [piece], piece_toks
+            current = [piece]
         else:
-            current.append(piece)
-            current_toks += piece_toks
+            current = candidate
 
     if current:
         chunks.append(joiner.join(current))
@@ -285,6 +290,13 @@ def _split_on_paragraphs(text: str, max_tokens: int) -> list[str]:
     return _bin_pack(paragraphs, max_tokens, "\n\n", _split_on_sentences)
 
 
+def _is_descendant(section: str, ancestor: str) -> bool:
+    """True if `section` is `ancestor` itself or a dotted sub-section
+    beneath it — e.g. '1607.5.1' is a descendant of '1607.5', but
+    '1608.1' is not (it's a sibling's sibling, a different section family)."""
+    return section == ancestor or section.startswith(ancestor + ".")
+
+
 def spans_to_chunks(
     spans: list[_SectionSpan],
     chapter: str,
@@ -293,10 +305,24 @@ def spans_to_chunks(
     min_tokens: int = MIN_TOKENS,
     max_tokens: int = MAX_TOKENS,
 ) -> list[Chunk]:
-    """Convert raw spans → final chunks with merge/split applied."""
+    """Convert raw spans → final chunks with merge/split applied.
+
+    A short span (<min_tokens) is only folded into a neighbor when there's
+    a genuine parent/child relationship by section number:
+      - backward, into the immediately preceding chunk, if this span is
+        that chunk's descendant (e.g. 1607.5.1 -> 1607.5's chunk);
+      - forward, prepended onto the next span, if this span is itself an
+        ancestor of it (a short intro stub like "1608.1 General." right
+        before its real subsections) — the merged chunk keeps the
+        ancestor's (earlier, more general) identity, same as a backward
+        merge would.
+    Otherwise the span stands alone as its own chunk, even under
+    min_tokens. min_tokens is a soft target, not a hard guarantee: gluing
+    two unrelated sections together to hit a token count would make a
+    chunk's citation describe content it doesn't actually contain, which
+    is worse than a small-but-honest chunk.
+    """
     chunks: list[Chunk] = []
-    pending_text = ""
-    pending_span: Optional[_SectionSpan] = None
 
     def _make_chunk(span: _SectionSpan, text: str, split_idx: int = 0) -> Chunk:
         toks = token_count(text)
@@ -320,47 +346,68 @@ def spans_to_chunks(
             split_index=split_idx,
         )
 
-    for span in spans:
-        body = "\n".join(span.lines)
-        toks = token_count(body)
-
-        # Merge very short spans into the previous pending span
-        if toks < min_tokens:
-            if pending_span is None:
-                pending_span = span
-                pending_text = body
-            else:
-                pending_text += "\n\n" + body
-                pending_span.page_end = span.page_end
-            continue
-
-        # Flush any pending short span first
-        if pending_span is not None:
-            merged_text = pending_text
-            merged_toks = token_count(merged_text)
-            if merged_toks > max_tokens:
-                for idx, part in enumerate(_split_on_paragraphs(merged_text, max_tokens)):
-                    chunks.append(_make_chunk(pending_span, part, split_idx=idx + 1))
-            else:
-                chunks.append(_make_chunk(pending_span, merged_text))
-            pending_span = None
-            pending_text = ""
-
-        # Handle the current (non-short) span
-        if toks > max_tokens:
-            for idx, part in enumerate(_split_on_paragraphs(body, max_tokens)):
+    def _emit(span: _SectionSpan, text: str) -> None:
+        """Append text as one or more chunks, splitting if it's oversized."""
+        if token_count(text) > max_tokens:
+            for idx, part in enumerate(_split_on_paragraphs(text, max_tokens)):
                 chunks.append(_make_chunk(span, part, split_idx=idx + 1))
         else:
-            chunks.append(_make_chunk(span, body))
+            chunks.append(_make_chunk(span, text))
 
-    # Flush remaining pending
-    if pending_span is not None:
-        merged_toks = token_count(pending_text)
-        if merged_toks > max_tokens:
-            for idx, part in enumerate(_split_on_paragraphs(pending_text, max_tokens)):
-                chunks.append(_make_chunk(pending_span, part, split_idx=idx + 1))
-        else:
-            chunks.append(_make_chunk(pending_span, pending_text))
+    forward_prefix_text = ""
+    forward_prefix_span: Optional[_SectionSpan] = None
+
+    for i, span in enumerate(spans):
+        body = "\n".join(span.lines)
+
+        # A pending ancestor stub gets prepended, and the merged unit keeps
+        # the ancestor's identity (the earlier, more general section wins,
+        # same convention as a backward merge).
+        if forward_prefix_span is not None:
+            body = forward_prefix_text + "\n\n" + body
+            span = _SectionSpan(
+                section_number=forward_prefix_span.section_number,
+                section_title=forward_prefix_span.section_title,
+                page_start=forward_prefix_span.page_start,
+                page_end=span.page_end,
+            )
+            forward_prefix_text = ""
+            forward_prefix_span = None
+
+        toks = token_count(body)
+
+        if toks >= min_tokens:
+            _emit(span, body)
+            continue
+
+        # Short: try folding backward into the chunk that's actually its parent.
+        if chunks and _is_descendant(span.section_number, chunks[-1].section_number):
+            prev = chunks.pop()
+            combined = prev.text + "\n\n" + body
+            prev_span = _SectionSpan(
+                section_number=prev.section_number,
+                section_title=prev.section_title,
+                page_start=prev.page_start,
+                page_end=span.page_end,
+            )
+            _emit(prev_span, combined)
+            continue
+
+        # Otherwise, is this span a stub introducing the next one?
+        next_span = spans[i + 1] if i + 1 < len(spans) else None
+        if next_span is not None and _is_descendant(next_span.section_number, span.section_number):
+            forward_prefix_text = body
+            forward_prefix_span = span
+            continue
+
+        # No genuine hierarchical home — stand alone rather than blend
+        # unrelated content under a misleading citation.
+        _emit(span, body)
+
+    # A trailing stub whose expected child never arrived (e.g. chapter ends
+    # right after it) — emit it on its own.
+    if forward_prefix_span is not None:
+        _emit(forward_prefix_span, forward_prefix_text)
 
     return chunks
 
