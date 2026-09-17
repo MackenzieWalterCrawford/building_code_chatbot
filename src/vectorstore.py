@@ -37,23 +37,37 @@ def _get_openai() -> OpenAI:
     return _openai_client
 
 
+def _split_host_port(url: str, default_port: int) -> tuple[str, int]:
+    """Split a 'http(s)://host[:port]' URL into (host, port).
+
+    Cloud-style URLs (e.g. Weaviate Cloud) commonly have no explicit port —
+    checking `":" in url` to decide that is wrong because the "http://" /
+    "https://" scheme itself always contains a colon, so that check is
+    always true and int() blows up parsing the bare hostname as a port.
+    """
+    hostpart = url.replace("http://", "").replace("https://", "").split("/")[0]
+    if ":" in hostpart:
+        host, port_str = hostpart.rsplit(":", 1)
+        return host, int(port_str)
+    return hostpart, default_port
+
+
 def get_weaviate_client() -> weaviate.WeaviateClient:
     """Return a connected Weaviate client."""
     if WEAVIATE_API_KEY:
         auth = weaviate.auth.AuthApiKey(WEAVIATE_API_KEY)
+        host, http_port = _split_host_port(WEAVIATE_URL, default_port=443)
         return weaviate.connect_to_custom(
-            http_host=WEAVIATE_URL.replace("http://", "").replace("https://", "").split(":")[0],
-            http_port=int(WEAVIATE_URL.split(":")[-1]) if ":" in WEAVIATE_URL else 8080,
+            http_host=host,
+            http_port=http_port,
             http_secure=WEAVIATE_URL.startswith("https"),
-            grpc_host=WEAVIATE_URL.replace("http://", "").replace("https://", "").split(":")[0],
+            grpc_host=host,
             grpc_port=50051,
-            grpc_secure=False,
+            grpc_secure=WEAVIATE_URL.startswith("https"),
             auth_credentials=auth,
         )
-    return weaviate.connect_to_local(
-        host=WEAVIATE_URL.replace("http://", "").replace("https://", "").split(":")[0],
-        port=int(WEAVIATE_URL.split(":")[-1]) if ":" in WEAVIATE_URL else 8080,
-    )
+    host, port = _split_host_port(WEAVIATE_URL, default_port=8080)
+    return weaviate.connect_to_local(host=host, port=port)
 
 
 def ensure_collection(client: weaviate.WeaviateClient) -> None:
@@ -120,8 +134,20 @@ def load_chunks(chunks: list[dict], client: weaviate.WeaviateClient) -> None:
 
     with collection.batch.dynamic() as batch:
         for chunk, vector in zip(new_chunks, vectors):
-            props = {k: v for k, v in chunk.items() if k != "chunk_id"}
-            batch.add_object(properties=props, vector=vector, uuid=weaviate.util.generate_uuid5(chunk["chunk_id"]))
+            batch.add_object(properties=chunk, vector=vector, uuid=weaviate.util.generate_uuid5(chunk["chunk_id"]))
+
+    failed = collection.batch.failed_objects
+    if failed:
+        for f in failed[:10]:
+            bad_id = f.object_.properties.get("chunk_id", "?") if f.object_ else "?"
+            print(f"  FAILED to upsert {bad_id}: {f.message}")
+        if len(failed) > 10:
+            print(f"  ...and {len(failed) - 10} more failures.")
+        raise RuntimeError(
+            f"{len(failed)}/{len(new_chunks)} chunks failed to upsert into Weaviate "
+            "(see messages above). Fix the underlying data/schema issue and re-run — "
+            "already-succeeded chunks will be skipped next time."
+        )
 
     print(f"  Upserted {len(new_chunks)} chunks.")
 
