@@ -24,6 +24,10 @@ load_dotenv()
 DEFAULT_TOP_K = int(os.getenv("RETRIEVAL_TOP_K", "8"))
 DEFAULT_ALPHA = float(os.getenv("RETRIEVAL_ALPHA", "0.75"))
 
+# Keep in sync with ingest.py's EDITION constant — only used as a fallback
+# if a stored object is somehow missing its "edition" property.
+DEFAULT_EDITION = "2022"
+
 
 @dataclass
 class RetrievedChunk:
@@ -37,7 +41,8 @@ class RetrievedChunk:
     page_end: int
     score: float
     source_file: str
-    edition: str = "2022"
+    edition: str = DEFAULT_EDITION
+    explain_score: str = ""
 
 
 def retrieve(
@@ -70,9 +75,15 @@ def retrieve(
             query=query,
             vector=query_vector,
             alpha=alpha,
+            # RELATIVE_SCORE normalizes the vector and BM25 scores to
+            # [0, 1] before blending by alpha — without this, Weaviate's
+            # default fusion blends by rank position instead, which makes
+            # `alpha` (and RETRIEVAL_ALPHA in .env) behave far less
+            # predictably as you tune it.
+            fusion_type=wvc.query.HybridFusion.RELATIVE_SCORE,
             limit=top_k,
             filters=filters,
-            return_metadata=wvc.query.MetadataQuery(score=True),
+            return_metadata=wvc.query.MetadataQuery(score=True, explain_score=True),
             return_properties=[
                 "chunk_id", "section_number", "section_title",
                 "chapter", "chapter_title", "text",
@@ -83,7 +94,15 @@ def retrieve(
         results: list[RetrievedChunk] = []
         for obj in response.objects:
             p = obj.properties
-            score = obj.metadata.score if obj.metadata else 0.0
+            # score=True was explicitly requested above, so metadata/score
+            # should always be present — surface it loudly if not, rather
+            # than silently reporting a fake 0.0 that looks like a real
+            # (just bad) relevance score.
+            if obj.metadata is None or obj.metadata.score is None:
+                raise RuntimeError(
+                    f"Weaviate returned no score for chunk_id={p.get('chunk_id', '?')!r} "
+                    "despite requesting return_metadata(score=True)."
+                )
             results.append(RetrievedChunk(
                 chunk_id=p.get("chunk_id", ""),
                 section_number=p.get("section_number", ""),
@@ -93,9 +112,10 @@ def retrieve(
                 text=p.get("text", ""),
                 page_start=p.get("page_start", 0),
                 page_end=p.get("page_end", 0),
-                score=float(score),
+                score=float(obj.metadata.score),
                 source_file=p.get("source_file", ""),
-                edition=p.get("edition", "2022"),
+                edition=p.get("edition", DEFAULT_EDITION),
+                explain_score=obj.metadata.explain_score or "",
             ))
 
         return results
