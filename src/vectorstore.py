@@ -4,11 +4,12 @@ Phase 2: Weaviate vector store — schema definition and idempotent loader.
 Collection: NYCBuildingCode
 Fields: chunk_id, code_name, edition, source_file, chapter, chapter_title,
         section_number, section_title, parent_section, page_start, page_end,
-        token_count, split_index, text (vectorized)
+        token_count, split_index, content_hash, text (vectorized)
 """
 
 from __future__ import annotations
 
+import hashlib
 import os
 import time
 from typing import Optional
@@ -16,7 +17,14 @@ from typing import Optional
 import weaviate
 import weaviate.classes as wvc
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import (
+    APIConnectionError,
+    APITimeoutError,
+    InternalServerError,
+    OpenAI,
+    RateLimitError,
+)
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 load_dotenv()
 
@@ -71,9 +79,23 @@ def get_weaviate_client() -> weaviate.WeaviateClient:
 
 
 def ensure_collection(client: weaviate.WeaviateClient) -> None:
-    """Create the collection if it doesn't exist (idempotent)."""
+    """Create the collection if it doesn't exist (idempotent).
+
+    Also backfills the `content_hash` property onto a collection that was
+    created before that field existed, so content-based idempotency in
+    `load_chunks` works even against a store from an older version of this
+    script.
+    """
     if client.collections.exists(COLLECTION_NAME):
-        print(f"Collection '{COLLECTION_NAME}' already exists — skipping creation.")
+        collection = client.collections.get(COLLECTION_NAME)
+        existing_props = {p.name for p in collection.config.get().properties}
+        if "content_hash" not in existing_props:
+            collection.config.add_property(
+                wvc.config.Property(name="content_hash", data_type=wvc.config.DataType.TEXT, skip_vectorization=True)
+            )
+            print(f"Collection '{COLLECTION_NAME}' already exists — added missing 'content_hash' property.")
+        else:
+            print(f"Collection '{COLLECTION_NAME}' already exists — skipping creation.")
         return
 
     client.collections.create(
@@ -94,38 +116,71 @@ def ensure_collection(client: weaviate.WeaviateClient) -> None:
             wvc.config.Property(name="page_end",       data_type=wvc.config.DataType.INT,   skip_vectorization=True),
             wvc.config.Property(name="token_count",    data_type=wvc.config.DataType.INT,   skip_vectorization=True),
             wvc.config.Property(name="split_index",    data_type=wvc.config.DataType.INT,   skip_vectorization=True),
+            wvc.config.Property(name="content_hash",   data_type=wvc.config.DataType.TEXT,  skip_vectorization=True),
             wvc.config.Property(name="text",           data_type=wvc.config.DataType.TEXT,  skip_vectorization=False),
         ],
     )
     print(f"Collection '{COLLECTION_NAME}' created.")
 
 
+def _content_hash(text: str) -> str:
+    """Stable content fingerprint used to detect edited chunk text."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+_RETRYABLE_OPENAI_ERRORS = (RateLimitError, APIConnectionError, APITimeoutError, InternalServerError)
+
+
+@retry(
+    retry=retry_if_exception_type(_RETRYABLE_OPENAI_ERRORS),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    stop=stop_after_attempt(5),
+    reraise=True,
+)
+def _embed_batch(client: OpenAI, batch: list[str]) -> list[list[float]]:
+    resp = client.embeddings.create(model=EMBEDDING_MODEL, input=batch)
+    return [r.embedding for r in resp.data]
+
+
 def embed_texts(texts: list[str], batch_size: int = 100) -> list[list[float]]:
-    """Embed a list of texts using OpenAI in batches."""
+    """Embed a list of texts using OpenAI in batches.
+
+    Transient failures (rate limits, timeouts, connection drops, 5xx) are
+    retried with exponential backoff per batch; other errors (e.g. a bad
+    request) fail immediately rather than burning through retries.
+    """
     client = _get_openai()
     vectors: list[list[float]] = []
     for i in range(0, len(texts), batch_size):
         batch = texts[i : i + batch_size]
-        resp = client.embeddings.create(model=EMBEDDING_MODEL, input=batch)
-        vectors.extend([r.embedding for r in resp.data])
+        vectors.extend(_embed_batch(client, batch))
         print(f"  Embedded {min(i + batch_size, len(texts))}/{len(texts)} texts")
     return vectors
 
 
 def load_chunks(chunks: list[dict], client: weaviate.WeaviateClient) -> None:
     """
-    Upsert chunks into Weaviate.  Idempotent: existing chunk_ids are skipped.
+    Upsert chunks into Weaviate.  Idempotent by content: a chunk is skipped
+    only if its chunk_id already exists AND its text is unchanged, per a
+    content hash — not just a chunk_id match. That way, editing the
+    chunking logic in ingest.py (same chunk_id, different text) causes the
+    chunk to be re-embedded instead of silently leaving a stale vector/text
+    in the store. A chunk_id with no matching hash in the store (new,
+    edited, or backfilled from a pre-content-hash collection) is treated
+    as needing (re-)embedding.
     """
     collection = client.collections.get(COLLECTION_NAME)
 
-    # Fetch existing chunk_ids to avoid re-embedding
-    existing_ids: set[str] = set()
-    for obj in collection.iterator(return_properties=["chunk_id"]):
-        existing_ids.add(obj.properties["chunk_id"])
-    print(f"  Existing objects in store: {len(existing_ids)}")
+    # Fetch existing chunk_id -> content_hash so unchanged chunks (skip)
+    # can be told apart from new or edited ones (re-embed).
+    existing_hashes: dict[str, str] = {}
+    for obj in collection.iterator(return_properties=["chunk_id", "content_hash"]):
+        existing_hashes[obj.properties["chunk_id"]] = obj.properties.get("content_hash") or ""
+    print(f"  Existing objects in store: {len(existing_hashes)}")
 
-    new_chunks = [c for c in chunks if c["chunk_id"] not in existing_ids]
-    print(f"  New chunks to embed and upsert: {len(new_chunks)}")
+    hashed_chunks = [{**c, "content_hash": _content_hash(c["text"])} for c in chunks]
+    new_chunks = [c for c in hashed_chunks if existing_hashes.get(c["chunk_id"]) != c["content_hash"]]
+    print(f"  New or changed chunks to embed and upsert: {len(new_chunks)}")
     if not new_chunks:
         return
 
@@ -168,8 +223,7 @@ if __name__ == "__main__":
         all_chunks.extend(json.loads(f.read_text()))
     print(f"Loaded {len(all_chunks)} chunks from {len(json_files)} files")
 
-    wv = get_weaviate_client()
-    ensure_collection(wv)
-    load_chunks(all_chunks, wv)
-    wv.close()
+    with get_weaviate_client() as wv:
+        ensure_collection(wv)
+        load_chunks(all_chunks, wv)
     print("Done.")
