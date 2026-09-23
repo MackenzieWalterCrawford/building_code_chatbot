@@ -4,6 +4,13 @@ Phase 4: Answer generation grounded strictly in retrieved chunks.
 Supports OpenAI (default) and Anthropic via LLM_PROVIDER env var.
 Returns: answer, cited section numbers, raw chunks, confidence score.
 
+The LLM is forced to respond with structured output (OpenAI Structured
+Outputs / Anthropic forced tool use) matching StructuredAnswer, rather than
+free-form prose. That removes the need to regex citations or substring-match
+an "insufficient" phrase out of the model's own wording — both citations and
+the sufficiency flag come back as typed, schema-validated fields regardless
+of which provider answered.
+
 Confidence is estimated from the top-k retrieval scores and how many
 unique sections are cited in the answer.
 """
@@ -11,36 +18,47 @@ unique sections are cited in the answer.
 from __future__ import annotations
 
 import os
-import re
 from dataclasses import dataclass, field
 
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
 
 from retrieve import RetrievedChunk
 
 load_dotenv()
 
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai").lower()
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic").lower()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_LLM_MODEL", "gpt-4o")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 
-SYSTEM_PROMPT = """\
+INSUFFICIENT_MESSAGE = (
+    "The retrieved code sections do not contain sufficient information "
+    "to answer this question. Please consult a NY-licensed professional "
+    "or search additional code sections."
+)
+
+SYSTEM_PROMPT = f"""\
 You are a precise technical assistant for NYC Building Code questions.
 Answer ONLY using the provided code sections below. Do not add information
 from general knowledge.
 
+You must respond by submitting your answer through the provided tool/function.
+Populate its fields as follows:
+- "answer": the plain-language answer an architect can act on, citing every
+  claim inline with the exact section number in the format §NNNN.N. Cite all
+  supporting sections when more than one applies.
+- "cited_sections": the same section numbers referenced in "answer", as bare
+  numbers without the § symbol (e.g. "1607.1").
+- "sufficient": true if the retrieved sections contain enough information to
+  answer the question, false otherwise.
+
 Rules:
-1. Cite every claim with the exact section number in the format §NNNN.N.
-2. If multiple sections support a point, cite all of them.
-3. Use plain language an architect can act on.
-4. If the retrieved sections do not contain enough information to answer
-   the question, respond with exactly:
-   "The retrieved code sections do not contain sufficient information to
-   answer this question. Please consult a NY-licensed professional or
-   search additional code sections."
-5. Never invent rules, numbers, or requirements not present in the text.
+1. Never invent rules, numbers, or requirements not present in the text.
+2. If "sufficient" is false, set "answer" to exactly:
+   "{INSUFFICIENT_MESSAGE}"
+   and leave "cited_sections" empty.
 """
 
 CONTEXT_TEMPLATE = """\
@@ -50,6 +68,22 @@ CONTEXT_TEMPLATE = """\
 
 Question: {question}
 """
+
+
+# ---------------------------------------------------------------------------
+# Structured LLM output contract
+# ---------------------------------------------------------------------------
+
+class StructuredAnswer(BaseModel):
+    answer: str = Field(
+        description="Plain-language answer, citing every claim inline as §NNNN.N."
+    )
+    cited_sections: list[str] = Field(
+        description="Bare section numbers cited in the answer, e.g. '1607.1' (no § symbol)."
+    )
+    sufficient: bool = Field(
+        description="False if the retrieved sections do not contain enough information to answer the question."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -79,49 +113,44 @@ def _build_context(chunks: list[RetrievedChunk], question: str) -> str:
     return CONTEXT_TEMPLATE.format(sections=sections_text, question=question)
 
 
-def _call_openai(context: str) -> str:
+def _call_openai(context: str) -> StructuredAnswer:
     from openai import OpenAI
     client = OpenAI(api_key=OPENAI_API_KEY)
-    resp = client.chat.completions.create(
+    resp = client.chat.completions.parse(
         model=OPENAI_MODEL,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": context},
         ],
+        response_format=StructuredAnswer,
         temperature=0,
     )
-    return resp.choices[0].message.content or ""
+    message = resp.choices[0].message
+    if message.parsed is None:
+        raise RuntimeError(f"OpenAI declined to produce a structured answer: {message.refusal}")
+    return message.parsed
 
 
-def _call_anthropic(context: str) -> str:
+def _call_anthropic(context: str) -> StructuredAnswer:
     import anthropic
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    resp = client.messages.create(
+    resp = client.messages.parse(
         model=ANTHROPIC_MODEL,
         max_tokens=1024,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": context}],
-        temperature=0,
+        output_format=StructuredAnswer,
     )
-    return resp.content[0].text
+    parsed = resp.parsed_output
+    if parsed is None:
+        raise RuntimeError("Anthropic did not return a structured answer.")
+    return parsed
 
 
-def _llm_call(context: str) -> str:
+def _llm_call(context: str) -> StructuredAnswer:
     if LLM_PROVIDER == "anthropic":
         return _call_anthropic(context)
     return _call_openai(context)
-
-
-# ---------------------------------------------------------------------------
-# Citation extraction
-# ---------------------------------------------------------------------------
-
-_RE_CITE = re.compile(r"§(\d{4}(?:\.\d+){0,3})")
-
-
-def extract_citations(answer: str) -> list[str]:
-    """Pull all §NNNN.N citations from the answer text."""
-    return list(dict.fromkeys(_RE_CITE.findall(answer)))  # deduplicated, ordered
 
 
 # ---------------------------------------------------------------------------
@@ -131,13 +160,13 @@ def extract_citations(answer: str) -> list[str]:
 def estimate_confidence(
     chunks: list[RetrievedChunk],
     cited_sections: list[str],
-    answer: str,
+    sufficient: bool,
 ) -> float:
     """
     Simple heuristic confidence:
     - Base: average of top-3 retrieval scores (normalized 0–1)
     - Bonus: +0.1 if ≥2 unique sections cited
-    - Penalty: -0.3 if answer contains "insufficient" keyword
+    - Penalty: -0.3 if the model reported the sections were insufficient
     Clamped to [0.0, 1.0].
     """
     if not chunks:
@@ -148,7 +177,7 @@ def estimate_confidence(
     base = sum(top3_scores) / len(top3_scores)
 
     bonus = 0.1 if len(cited_sections) >= 2 else 0.0
-    penalty = -0.3 if "do not contain sufficient" in answer.lower() else 0.0
+    penalty = -0.3 if not sufficient else 0.0
 
     return round(min(1.0, max(0.0, base + bonus + penalty)), 3)
 
@@ -166,13 +195,8 @@ def generate(
     Returns GenerationResult with answer, citations, confidence.
     """
     if not chunks:
-        insufficient_msg = (
-            "The retrieved code sections do not contain sufficient information "
-            "to answer this question. Please consult a NY-licensed professional "
-            "or search additional code sections."
-        )
         return GenerationResult(
-            answer=insufficient_msg,
+            answer=INSUFFICIENT_MESSAGE,
             cited_sections=[],
             confidence=0.0,
             retrieved_chunks=[],
@@ -180,18 +204,16 @@ def generate(
         )
 
     context = _build_context(chunks, question)
-    answer = _llm_call(context)
+    structured = _llm_call(context)
 
-    cited = extract_citations(answer)
-    insufficient = "do not contain sufficient" in answer.lower()
-    confidence = estimate_confidence(chunks, cited, answer)
+    confidence = estimate_confidence(chunks, structured.cited_sections, structured.sufficient)
 
     return GenerationResult(
-        answer=answer,
-        cited_sections=cited,
+        answer=structured.answer,
+        cited_sections=structured.cited_sections,
         confidence=confidence,
         retrieved_chunks=chunks,
-        insufficient=insufficient,
+        insufficient=not structured.sufficient,
     )
 
 
