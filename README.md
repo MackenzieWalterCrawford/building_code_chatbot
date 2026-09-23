@@ -2,23 +2,30 @@
 
 Ask natural-language questions about the **2022 NYC Building Code** and get plain-language answers with exact section citations, confidence scores, and source text.
 
+## Repo layout
+
+```
+backend/    FastAPI service + RAG pipeline (ingest → vectorstore → retrieve → generate → api)
+frontend/   React app (not yet scaffolded) — talks to the backend over HTTP
+```
+
 ## Architecture
 
 ```
-PDF files (data/raw/)
+PDF files (backend/data/raw/)
       │
       ▼
  ingest.py  ──────────────────────────────────────────────────
   • pymupdf text extraction                                    │
   • Section-aware chunking (§NNNN.N boundaries)               │
   • Metadata: chapter, section_number, title, edition         │
-  • Output: data/processed/*.json                             │
+  • Output: backend/data/processed/*.json                     │
       │                                                        │
       ▼                                                        │
  vectorstore.py                                               │
   • OpenAI text-embedding-3-large                             │
   • Weaviate collection: NYCBuildingCode                      │
-  • Idempotent upsert                                         │
+  • Idempotent upsert (content-hash based)                    │
       │                                                        │
       ▼                                                        │
  retrieve.py                                                   │
@@ -29,17 +36,22 @@ PDF files (data/raw/)
       ▼                                                        │
  generate.py                                                   │
   • LLM (GPT-4o or Claude) grounded on retrieved text        │
-  • Extracts §citations from answer                           │
-  • Confidence heuristic from retrieval scores               │
+  • Structured output: answer, cited_sections, sufficient     │
+  • Confidence heuristic from retrieval scores                │
       │                                                        │
       ▼                                                        │
- api.py  (FastAPI)     app.py  (Streamlit)                    │
-  POST /ask              UI: question → answer + sources      │
+ api.py  (FastAPI)                                             │
+  GET  /health                                                │
+  GET  /chapters      → chapter list, for a UI filter         │
+  POST /ask           → answer + sources + citations          │
       │                                                        │
       ▼                                                        │
  logger.py                                                     │
   SQLite: logs/interactions.db ──────────────────────────────
 ```
+
+React (`frontend/`) calls `api.py` over HTTP — see `frontend/README.md` for
+the request/response contract.
 
 ## Setup
 
@@ -51,9 +63,12 @@ PDF files (data/raw/)
 
 ### 2. Place the PDFs
 
-Chapter PDFs are already in `data/pdfs/`. Symlinks to `data/raw/` are created by the ingest script. If you want to ingest ALL Building Code chapters:
+Chapter PDFs are already in `backend/data/pdfs/`. Symlinks to `backend/data/raw/`
+are created by the ingest script. If you want to ingest ALL Building Code chapters,
+run this from `backend/`:
 
 ```bash
+cd backend
 for f in data/pdfs/2022BC_Chapter*.pdf; do
   ln -sf "../../$f" data/raw/"$(basename $f)"
 done
@@ -62,6 +77,7 @@ done
 ### 3. Configure environment
 
 ```bash
+cd backend
 cp .env.example .env
 # Edit .env — at minimum set OPENAI_API_KEY
 ```
@@ -76,14 +92,18 @@ Key variables:
 | `WEAVIATE_URL` | `http://localhost:8080` | Weaviate endpoint |
 | `CHUNK_TARGET_TOKENS` | `768` | Target tokens per chunk |
 | `RETRIEVAL_ALPHA` | `0.75` | Hybrid search balance |
+| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Allowed origins for the React frontend |
 
 ### 4. Install Python dependencies (local dev)
 
 ```bash
+cd backend
 pip install -r requirements.txt
 ```
 
 ### 5. Run the ingestion pipeline
+
+Run from `backend/`:
 
 ```bash
 # Single chapter first (for testing)
@@ -105,7 +125,6 @@ docker-compose up --build
 This starts:
 - **Weaviate** on port 8080
 - **FastAPI** on port 8000  →  http://localhost:8000/docs
-- **Streamlit** on port 8501  →  http://localhost:8501
 
 **First run:** after containers start, run ingestion inside the api container:
 ```bash
@@ -115,7 +134,16 @@ docker-compose exec api python src/vectorstore.py
 
 ## Usage
 
-Open http://localhost:8501, type a question, and press **Ask**.
+The React frontend isn't scaffolded yet (see `frontend/README.md`). Until then,
+interact with the API directly:
+
+```bash
+curl -X POST http://localhost:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "What is the minimum floor live load for office occupancies?"}'
+```
+
+Or use the built-in Swagger UI at http://localhost:8000/docs.
 
 Example questions:
 - *What is the minimum floor live load for office occupancies?*
@@ -128,16 +156,17 @@ Example questions:
 # Start Weaviate only
 docker-compose up weaviate -d
 
-# Run FastAPI locally
-uvicorn src.api:app --reload --port 8000
-
-# Run Streamlit locally
-streamlit run src/app.py
+# Run FastAPI locally (from backend/) — PYTHONPATH=src is required because
+# api.py imports its sibling modules (generate, retrieve, vectorstore) as
+# flat imports; Docker sets this via ENV PYTHONPATH=/app/src.
+cd backend
+PYTHONPATH=src uvicorn src.api:app --reload --port 8000
 ```
 
 ## Running tests
 
 ```bash
+cd backend
 pytest tests/ -v
 ```
 

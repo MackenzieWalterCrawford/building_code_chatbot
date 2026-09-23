@@ -25,7 +25,7 @@ from pydantic import BaseModel, Field
 from generate import generate
 from logger import log_interaction
 from retrieve import retrieve
-from vectorstore import get_weaviate_client
+from vectorstore import COLLECTION_NAME, get_weaviate_client
 
 load_dotenv()
 
@@ -65,9 +65,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -103,6 +109,11 @@ class AskResponse(BaseModel):
     insufficient: bool
 
 
+class ChapterInfo(BaseModel):
+    chapter: str
+    chapter_title: str
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -110,6 +121,23 @@ class AskResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/chapters", response_model=list[ChapterInfo])
+def chapters():
+    """List distinct chapters in the store, for a frontend filter dropdown."""
+    collection = _wv_client.collections.get(COLLECTION_NAME)
+    seen: dict[str, str] = {}
+    for obj in collection.iterator(return_properties=["chapter", "chapter_title"]):
+        seen.setdefault(obj.properties["chapter"], obj.properties["chapter_title"])
+
+    def sort_key(chapter: str) -> tuple[int, str]:
+        return (0, f"{int(chapter):04d}") if chapter.isdigit() else (1, chapter)
+
+    return [
+        ChapterInfo(chapter=c, chapter_title=t)
+        for c, t in sorted(seen.items(), key=lambda item: sort_key(item[0]))
+    ]
 
 
 @app.post("/ask", response_model=AskResponse)
