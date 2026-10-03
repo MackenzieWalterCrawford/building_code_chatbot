@@ -57,10 +57,12 @@ _RE_CHAPTER = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
-# Numbered section: 1601.1, 1601.1.1, 1601.1.1.1
+# Numbered section: 1601.1, 1601.1.1, 1601.1.1.1 (chapters 10+) or
+# 703.2, 101.1 (chapters 1-9, whose section numbers are 3 digits, not 4,
+# since the leading digit(s) are the chapter number itself).
 # Followed by at least one word character (the title)
 _RE_SECTION = re.compile(
-    r"^(\d{4}(?:\.\d+){1,3})\s{1,6}([A-Z][^\n]{2,80})",
+    r"^(\d{3,4}(?:\.\d+){1,3})\s{1,6}([A-Z][^\n]{2,80})",
     re.MULTILINE,
 )
 

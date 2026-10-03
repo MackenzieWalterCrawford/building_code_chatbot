@@ -14,6 +14,11 @@ venv/
 # Logs
 logs/
 
+# Local symlinks to data/pdfs/ (recreated via the README's setup loop;
+# committing them breaks on Windows -- WSL-created symlinks on a Windows
+# drive aren't readable by native Windows git)
+backend/data/raw/
+
 # Frontend (React)
 node_modules/
 dist/

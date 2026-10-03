@@ -52,6 +52,17 @@ class TestSectionRegex:
         assert m is not None
         assert m.group(1) == "1607.1.1.1"
 
+    def test_three_digit_section(self):
+        # Chapters 1-9 use 3-digit section numbers (e.g. "703.2"), not the
+        # 4-digit ones chapters 10+ use (e.g. "1607.1") -- the chapter number
+        # itself is only 1 digit there, so the whole section number is
+        # shorter. Regression test for a bug where the regex required
+        # exactly 4 leading digits and silently matched zero sections in
+        # every chapter 1-9 PDF.
+        m = _RE_SECTION.match("703.2 Exterior bearing walls")
+        assert m is not None
+        assert m.group(1) == "703.2"
+
     def test_no_match_plain_text(self):
         assert _RE_SECTION.match("This is plain body text.") is None
 
