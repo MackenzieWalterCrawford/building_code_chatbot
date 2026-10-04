@@ -1,0 +1,192 @@
+/* Windows 95 theme for the RAG chat. Import once: import './win95.css'; */
+
+:root {
+  --w95-desktop: #008080;
+  --w95-face: #c0c0c0;
+  --w95-light: #dfdfdf;
+  --w95-highlight: #ffffff;
+  --w95-shadow: #808080;
+  --w95-dark: #000000;
+  --w95-title: #000080;
+  --w95-font: Tahoma, "MS Sans Serif", Geneva, sans-serif;
+}
+
+.w95-desktop {
+  /* Pin to light-mode form-control rendering regardless of OS/browser
+     dark-mode setting -- otherwise the browser can apply its own native
+     dark-mode text color to inputs on top of the backgrounds forced below,
+     e.g. white-on-white in the message input. */
+  color-scheme: light;
+  min-height: 100vh;
+  background: var(--w95-desktop);
+  font-family: var(--w95-font);
+  font-size: 13px;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.w95-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+/* Bevels */
+.w95-raised {
+  border-top: 1px solid var(--w95-highlight);
+  border-left: 1px solid var(--w95-highlight);
+  border-right: 1px solid var(--w95-dark);
+  border-bottom: 1px solid var(--w95-dark);
+  box-shadow: inset -1px -1px 0 var(--w95-shadow), inset 1px 1px 0 var(--w95-light);
+}
+.w95-sunken {
+  border-top: 1px solid var(--w95-shadow);
+  border-left: 1px solid var(--w95-shadow);
+  border-right: 1px solid var(--w95-highlight);
+  border-bottom: 1px solid var(--w95-highlight);
+  box-shadow: inset 1px 1px 0 var(--w95-dark), inset -1px -1px 0 var(--w95-light);
+}
+
+/* Window */
+.w95-window {
+  width: 100%;
+  max-width: 720px;
+  height: min(560px, calc(100vh - 110px));
+  background: var(--w95-face);
+  padding: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-sizing: border-box;
+}
+
+.w95-titlebar {
+  height: 22px;
+  background: var(--w95-title);
+  color: #fff;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3px 0 4px;
+  user-select: none;
+}
+.w95-title { display: flex; align-items: center; gap: 6px; }
+.w95-title-buttons { display: flex; gap: 2px; }
+
+.w95-menubar { display: flex; gap: 2px; padding: 2px 2px 0; user-select: none; }
+.w95-menubar span { padding: 2px 6px; }
+
+.w95-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 6px 8px 8px;
+}
+
+/* Messages */
+.w95-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #fff;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.w95-msg { display: flex; flex-direction: column; gap: 4px; }
+.w95-who { font-weight: bold; }
+.w95-msg.bot .w95-who { color: var(--w95-title); }
+.w95-text { line-height: 1.45; white-space: pre-wrap; }
+.w95-source { font-size: 12px; color: #444; }
+.w95-source a { color: var(--w95-title); }
+.w95-thinking { color: #444; }
+
+/* Input row */
+.w95-form { display: flex; gap: 6px; margin: 0; }
+.w95-input {
+  flex: 1;
+  height: 44px;
+  padding: 0 10px;
+  background: #fff;
+  color: #000;
+  font: inherit;
+  border-radius: 0;
+  box-sizing: border-box;
+}
+.w95-input:focus { outline: none; }
+.w95-input:disabled { background: var(--w95-face); }
+
+/* Buttons */
+.w95-btn {
+  background: var(--w95-face);
+  color: #000;
+  font: inherit;
+  border-radius: 0;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.w95-btn:active:not(:disabled) {
+  border-top: 1px solid var(--w95-dark);
+  border-left: 1px solid var(--w95-dark);
+  border-right: 1px solid var(--w95-highlight);
+  border-bottom: 1px solid var(--w95-highlight);
+  box-shadow: inset 1px 1px 0 var(--w95-shadow);
+}
+.w95-btn:focus-visible { outline: 1px dotted #000; outline-offset: -5px; }
+.w95-btn:disabled { color: var(--w95-shadow); text-shadow: 1px 1px 0 #fff; cursor: default; }
+.w95-send { width: 96px; height: 44px; }
+.w95-tbtn {
+  width: 18px; height: 16px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: bold; line-height: 1;
+}
+
+/* Status bar */
+.w95-statusbar { display: flex; gap: 2px; padding: 0 2px 1px; font-size: 12px; }
+.w95-statusbar > div { padding: 3px 6px; }
+.w95-statusbar > div:first-child { flex: 1; }
+.w95-statusbar > div:last-child { width: 120px; }
+
+/* Taskbar */
+.w95-taskbar {
+  height: 30px;
+  background: var(--w95-face);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3px;
+  box-sizing: border-box;
+  font-size: 12px;
+}
+.w95-taskbar-left { display: flex; gap: 4px; align-items: center; }
+.w95-start {
+  height: 24px; padding: 0 6px; font-weight: bold;
+  display: flex; align-items: center; gap: 4px;
+}
+.w95-task {
+  height: 22px; width: 180px; padding: 0 6px;
+  display: flex; align-items: center; font-weight: bold;
+  background: var(--w95-light); box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.w95-clock { height: 22px; padding: 0 10px; display: flex; align-items: center; box-sizing: border-box; }
+
+.w95-sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .w95-stage { padding: 8px; }
+  .w95-window { height: calc(100vh - 46px); }
+  .w95-task { display: none; }
+}
