@@ -22,37 +22,37 @@ PDF files (backend/data/raw/)
       │
       ▼
  ingest.py  ──────────────────────────────────────────────────
-  • pymupdf text extraction                                    │
-  • Section-aware chunking (§NNNN.N boundaries)               │
-  • Metadata: chapter, section_number, title, edition         │
-  • Output: backend/data/processed/*.json                     │
-      │                                                        │
-      ▼                                                        │
- vectorstore.py                                               │
-  • OpenAI text-embedding-3-large                             │
-  • Weaviate collection: NYCBuildingCode                      │
-  • Idempotent upsert (content-hash based)                    │
-      │                                                        │
-      ▼                                                        │
- retrieve.py                                                   │
-  • Hybrid search: dense vector (α) + BM25 (1-α)             │
-  • Metadata filtering by chapter                             │
-  • Returns top-k RetrievedChunk objects                      │
-      │                                                        │
-      ▼                                                        │
- generate.py                                                   │
-  • LLM (GPT-4o or Claude) grounded on retrieved text        │
-  • Structured output: answer, cited_sections, sufficient     │
-  • Confidence heuristic from retrieval scores                │
-      │                                                        │
-      ▼                                                        │
- api.py  (FastAPI)                                             │
-  GET  /health                                                │
-  GET  /chapters      → chapter list, for a UI filter         │
-  POST /ask           → answer + sources + citations          │
-      │                                                        │
-      ▼                                                        │
- logger.py                                                     │
+  • pymupdf text extraction                                    
+  • Section-aware chunking (§NNNN.N boundaries)               
+  • Metadata: chapter, section_number, title, edition         
+  • Output: backend/data/processed/*.json                     
+      │                                                        
+      ▼                                                        
+ vectorstore.py                                               
+  • OpenAI text-embedding-3-large                             
+  • Weaviate collection: NYCBuildingCode                      
+  • Idempotent upsert (content-hash based)                    
+      │                                                        
+      ▼                                                        
+ retrieve.py                                                   
+  • Hybrid search: dense vector (α) + BM25 (1-α)             
+  • Metadata filtering by chapter                             
+  • Returns top-k RetrievedChunk objects                      
+      │                                                        
+      ▼                                                        
+ generate.py                                                   
+  • LLM (GPT-4o or Claude) grounded on retrieved text        
+  • Structured output: answer, cited_sections, sufficient     
+  • Confidence heuristic from retrieval scores                
+      │                                                        
+      ▼                                                        
+ api.py  (FastAPI)                                             
+  GET  /health                                                
+  GET  /chapters      → chapter list, for a UI filter         
+  POST /ask           → answer + sources + citations          
+      │                                                        
+      ▼                                                        
+ logger.py                                                     
   SQLite: logs/interactions.db ──────────────────────────────
 ```
 
