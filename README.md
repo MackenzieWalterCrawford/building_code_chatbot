@@ -2,6 +2,12 @@
 
 Ask natural-language questions about the **2022 NYC Building Code** and get plain-language answers with exact section citations, confidence scores, and source text.
 
+<img width="835" height="656" alt="image" src="https://github.com/user-attachments/assets/b7f61f5d-7ff3-4735-b0da-fbc02dbbb87d" />
+
+<img width="1915" height="967" alt="image" src="https://github.com/user-attachments/assets/2da3061b-d6a7-44ee-a149-0b3b839efa8e" />
+
+
+
 ## Repo layout
 
 ```
