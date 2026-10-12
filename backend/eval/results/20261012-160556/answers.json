@@ -1,0 +1,703 @@
+{
+  "summary": {
+    "alpha": 0.75,
+    "top_k": 8,
+    "answerable_n": 31,
+    "unanswerable_n": 5,
+    "answer_rate_on_answerable": 1.0,
+    "abstain_rate_on_unanswerable": 1.0,
+    "citation_recall": 0.9838709677419355,
+    "citation_precision": 0.8736559139784946,
+    "citation_grounded": 0.989247311827957,
+    "citation_referenced": 0.01075268817204301,
+    "median_latency_s": 2.48,
+    "faithful": 0.967741935483871,
+    "correct": 0.8387096774193549,
+    "judged_n": 31
+  },
+  "rows": [
+    {
+      "id": "fire-01",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "904.12.1"
+      ],
+      "confidence": 0.613,
+      "latency_s": 3.18,
+      "answer": "The manual pull for a commercial kitchen's fire suppression system can be mounted not more than 48 inches (1220 mm) above the finished floor, as specified in \u00a7904.12.1.",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": false,
+      "correct": false,
+      "judge_reason": "The assistant's answer omits the minimum height requirement of 42 inches above the finished floor."
+    },
+    {
+      "id": "fire-02",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "903.2.3"
+      ],
+      "confidence": 0.722,
+      "latency_s": 2.48,
+      "answer": "A school building, classified as Group E occupancy, requires an automatic sprinkler system in the following situations: 1) throughout all Group E fire areas greater than 12,000 square feet (\u00a7903.2.3), and 2) throughout every portion of educational buildings below the level of exit discharge (\u00a7903.2.3). However, there is an exception where an automatic sprinkler system is not required if every classroom throughout the building has at least one exterior exit door at ground level without intervening corridors, passageways, interior exit stairways, or ramps (\u00a7903.2.3).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the requirements and exception for automatic sprinkler systems in school buildings as per \u00a7903.2.3."
+    },
+    {
+      "id": "fire-03",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "903.2.1.4",
+        "507.4"
+      ],
+      "confidence": 0.893,
+      "latency_s": 3.59,
+      "answer": "For a Group A-4 arena or indoor sports venue, an automatic sprinkler system is required if any of the following conditions are met: 1) the fire area exceeds 12,000 square feet (\u00a7903.2.1.4), 2) the fire area has an occupant load of 300 or more (\u00a7903.2.1.4), or 3) the aggregate occupant load of all fire areas occupied by Group A on any given floor other than the level of exit discharge is 300 or more (\u00a7903.2.1.4). However, there is an exception for areas used exclusively as participant sports areas where the main floor area is at the same level as the level of exit discharge of the main entrance and exit (\u00a7903.2.1.4). Additionally, for one-story Group A-4 buildings, sprinklers are not required in areas occupied for indoor participant sports if exit doors directly to the outside are provided and the building has a fire alarm system (\u00a7507.4).",
+      "citation_recall": 1.0,
+      "citation_precision": 0.5,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer includes all key conditions and exceptions from the provided sections."
+    },
+    {
+      "id": "fire-04",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "907.2.8.5",
+        "907.2.13.1",
+        "907.5.2.2"
+      ],
+      "confidence": 0.758,
+      "latency_s": 2.63,
+      "answer": "For a hotel with more than 50 sleeping rooms above street level, classified as a Group R-1 occupancy, the building must be equipped with automatic smoke detection connected to an automatic fire alarm system in accordance with \u00a7907.2.13.1. Additionally, an emergency voice/alarm communication system must be installed in accordance with \u00a7907.5.2.2, which initiates a total evacuation signal (\u00a7907.2.8.5).",
+      "citation_recall": 1.0,
+      "citation_precision": 0.3333333333333333,
+      "citation_grounded": 0.6666666666666666,
+      "citation_referenced": 0.3333333333333333,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer includes all key facts from the reference answer and is supported by the provided sections."
+    },
+    {
+      "id": "fire-05",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "715.1",
+        "715.3"
+      ],
+      "confidence": 1.0,
+      "latency_s": 2.78,
+      "answer": "Yes, a special fire-resistant joint system is required in the joint between fire-resistance-rated floor assemblies. The joint system must be designed to resist the passage of fire for a time period not less than the required fire-resistance rating of the floor in which it is installed (\u00a7715.1). The fire-resistant joint systems must be tested in accordance with the requirements of either ASTM E 1966 or UL 2079 (\u00a7715.3).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer correctly states the requirement for a fire-resistant joint system and the testing standards, matching the reference answer."
+    },
+    {
+      "id": "fire-06",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "909.7"
+      ],
+      "confidence": 0.677,
+      "latency_s": 2.28,
+      "answer": "The standard that governs smoke control systems designed with the airflow method is NFPA 92, as stated in \u00a7909.7.",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant correctly identifies NFPA 92 as the governing standard for the airflow method, as stated in \u00a7909.7."
+    },
+    {
+      "id": "egress-01",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1010.1.6",
+        "1011.6"
+      ],
+      "confidence": 0.916,
+      "latency_s": 2.29,
+      "answer": "When a door is fully open, it can project into a stair landing by no more than 7 inches (\u00a71010.1.6, \u00a71011.6).",
+      "citation_recall": 1.0,
+      "citation_precision": 0.5,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": false,
+      "judge_reason": "The assistant answer omits that doors cannot reduce the landing to less than half the required width."
+    },
+    {
+      "id": "egress-02",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1028.5"
+      ],
+      "confidence": 0.73,
+      "latency_s": 5.07,
+      "answer": "If an exit cannot discharge directly to a public way, a safe dispersal area must be provided. This area must meet the following requirements: it should accommodate at least 5 square feet per person (\u00a71028.5), be located on the same lot at least 50 feet away from the building (\u00a71028.5), be permanently maintained and identified as a safe dispersal area (\u00a71028.5), have a safe and unobstructed path of travel from the building (\u00a71028.5), and be illuminated in accordance with Section 1008 (\u00a71028.5).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer includes all key facts from the reference answer and is supported by the provided sections."
+    },
+    {
+      "id": "egress-03",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1026.2",
+        "706",
+        "707",
+        "711"
+      ],
+      "confidence": 0.843,
+      "latency_s": 4.74,
+      "answer": "The wall separating buildings joined by a horizontal exit must have a minimum fire-resistance rating of 2 hours, as specified in \u00a71026.2. This separation can be achieved using a fire wall complying with \u00a7706, a fire barrier complying with \u00a7707, or a horizontal assembly complying with \u00a7711, or a combination of these methods.",
+      "citation_recall": 1.0,
+      "citation_precision": 0.25,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer correctly states the 2-hour minimum fire-resistance rating and references the relevant sections."
+    },
+    {
+      "id": "egress-04",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1025.6.1"
+      ],
+      "confidence": 0.874,
+      "latency_s": 3.39,
+      "answer": "The minimum size for the word \"EXIT\" on photoluminescent door signs and directional signs is 4 inches high with strokes no less than 1/2 inch wide (\u00a71025.6.1). The emergency exit symbol must also be at least 4 inches high (\u00a71025.6.1).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer matches the reference answer and is supported by \u00a71025.6.1."
+    },
+    {
+      "id": "egress-05",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1010.1.4.3"
+      ],
+      "confidence": 0.871,
+      "latency_s": 2.8,
+      "answer": "For power-operated sliding or folding doors used in a means of egress, the force required to operate the door shall not exceed 30 pounds (133.4 N) to set the door in motion and 15 pounds (66.7 N) to close the door or open it to the minimum required width (\u00a71010.1.4.3). Additionally, the door shall be openable with a force not to exceed 15 pounds (66.7 N) when a force of 250 pounds (1112 N) is applied perpendicular to the door adjacent to the operating device (\u00a71010.1.4.3).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": false,
+      "judge_reason": "The assistant answer omits that the doors must be power operated and manually operable on power failure."
+    },
+    {
+      "id": "access-01",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1104.3.2"
+      ],
+      "confidence": 0.58,
+      "latency_s": 2.57,
+      "answer": "Press boxes in stadium bleachers do not have to be on an accessible route if they have a single point of entry from the bleachers and the aggregate area of all press boxes for each area of sport activity is not more than 500 square feet (\u00a71104.3.2, Exception 1). Additionally, free-standing press boxes that are more than 12 feet above grade are also exempt from requiring an accessible route under the same area condition (\u00a71104.3.2, Exception 2).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer correctly states the exceptions for press boxes not requiring an accessible route, matching the reference answer."
+    },
+    {
+      "id": "access-02",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1109.9"
+      ],
+      "confidence": 0.745,
+      "latency_s": 2.19,
+      "answer": "At least 5 percent, but not less than one of each type of fixed or built-in storage element, such as lockers and shelves, must be accessible in required accessible spaces (\u00a71109.9).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the requirement from \u00a71109.9."
+    },
+    {
+      "id": "access-03",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1107.2.3.1"
+      ],
+      "confidence": 0.616,
+      "latency_s": 2.38,
+      "answer": "An accessible apartment kitchen counter must be adjustable or designed to be replaceable as a unit at variable heights between 29 inches and 36 inches, measured from the floor to the top of the work surface (\u00a71107.2.3.1). The owner is responsible for adjusting or replacing the countertop at the time an individual with disabilities takes occupancy of the unit, or within 10 days of the date the request is made by such individual, whichever is later, and this must be done at the owner's expense (\u00a71107.2.3.1).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the requirements and responsibilities stated in \u00a71107.2.3.1."
+    },
+    {
+      "id": "access-04",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1108.2.2"
+      ],
+      "confidence": 0.767,
+      "latency_s": 2.3,
+      "answer": "Yes, unsold wheelchair spaces in an arena can be sold to people without disabilities if they remain unsold 24 hours before the event, as per \u00a71108.2.2.",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer correctly states that unsold wheelchair spaces can be sold to the general public 24 hours before the event, as supported by \u00a71108.2.2."
+    },
+    {
+      "id": "env-01",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1205.2.7.2"
+      ],
+      "confidence": 0.791,
+      "latency_s": 2.05,
+      "answer": "The top of at least one window or other opening providing required natural lighting to a habitable room must be a minimum of 7 feet (2133.6 mm) above the floor of the room or space served by the window or opening (\u00a71205.2.7.2).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": false,
+      "judge_reason": "The assistant answer omits that only glazing above 30 inches counts toward required natural light."
+    },
+    {
+      "id": "env-02",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1206.4"
+      ],
+      "confidence": 0.725,
+      "latency_s": 2.18,
+      "answer": "In apartment buildings classified under Group R-1 or R-2 occupancies, courtyards must be artificially illuminated with a minimum intensity of not less than 1 footcandle (11 lux) measured 30 inches (762 mm) above the floor of the lowest level of such yards or courts (\u00a71206.4).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the lighting requirement for courtyards in Group R-1 and R-2 occupancies as stated in \u00a71206.4."
+    },
+    {
+      "id": "env-03",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1203.5.3",
+        "1205.2.5"
+      ],
+      "confidence": 0.803,
+      "latency_s": 2.23,
+      "answer": "The smallest recess width that can supply natural ventilation openings on a court is 6 feet (1828.8 mm) as per \u00a71203.5.3 and \u00a71205.2.5. Openings for natural ventilation must not be on a recess of less than this width.",
+      "citation_recall": 1.0,
+      "citation_precision": 0.5,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer correctly states that openings must not be on a recess of less than 6 feet, supported by \u00a71203.5.3 and \u00a71205.2.5."
+    },
+    {
+      "id": "env-04",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "1208.3.2"
+      ],
+      "confidence": 0.825,
+      "latency_s": 2.66,
+      "answer": "In a dwelling unit, at least one habitable room must have a minimum net floor area of 150 square feet (13.9 m\u00b2) as per \u00a71208.3.2. This requirement does not apply to Group R-1 dwelling or sleeping units, which are exceptions to this rule.",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer correctly states the minimum floor area requirement and notes the exception for Group R-1 units, aligning with the reference answer."
+    },
+    {
+      "id": "height-01",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "501.2"
+      ],
+      "confidence": 0.616,
+      "latency_s": 2.42,
+      "answer": "Street address numbers on a building must be a minimum of 4 inches (102 mm) high and a minimum of 0.5 inch (12.7 mm) wide. They must be installed on a contrasting background and be plainly visible from the street or road fronting the property, as per \u00a7501.2.",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer includes all key facts from the reference answer and is supported by \u00a7501.2."
+    },
+    {
+      "id": "height-02",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "501.3.1"
+      ],
+      "confidence": 0.784,
+      "latency_s": 2.21,
+      "answer": "A building must have at least 8 percent of its total perimeter adjoining a street or frontage space for fire department access, as specified in \u00a7501.3.1.",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the requirement from \u00a7501.3.1."
+    },
+    {
+      "id": "height-03",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "507.2.1"
+      ],
+      "confidence": 0.66,
+      "latency_s": 2.17,
+      "answer": "Yes, the 60-foot yard width required for unlimited area buildings can be reduced to not less than 40 feet, provided certain conditions are met. These conditions include that the reduced width is not allowed for more than 75 percent of the building's perimeter, the exterior walls facing the reduced width must have a fire-resistance rating of not less than 3 hours, and openings in these walls must have opening protectives with a fire protection rating of not less than 3 hours (\u00a7507.2.1).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer includes all key facts from the reference answer and is supported by \u00a7507.2.1."
+    },
+    {
+      "id": "height-04",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "507.8.1",
+        "507.8.1.1"
+      ],
+      "confidence": 0.887,
+      "latency_s": 2.88,
+      "answer": "In an unlimited-area building, the aggregate floor area of Group H occupancies is limited to 10 percent of the total area of the building, and it must also comply with the area limitations specified in Section 506 based on the perimeter of each Group H floor area that fronts on a public way or open space (\u00a7507.8.1). For Group H occupancies not located at the perimeter of the building, the aggregate floor area is further restricted to not exceed 25 percent of the area limitations specified in Section 506 (\u00a7507.8.1.1).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the key facts from the reference answer and is supported by the provided sections."
+    },
+    {
+      "id": "height-05",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "507.8.1.1.1",
+        "415.6"
+      ],
+      "confidence": 0.981,
+      "latency_s": 2.36,
+      "answer": "Liquid mixing rooms with a floor area of not more than 500 square feet do not need to be located on the outer perimeter of the building, provided they comply with the New York City Fire Code and NFPA 30 (\u00a7507.8.1.1.1, \u00a7415.6 Exception 1).",
+      "citation_recall": 1.0,
+      "citation_precision": 0.5,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer correctly states the exception for liquid mixing rooms with a floor area of 500 sq ft or less, matching the reference answer."
+    },
+    {
+      "id": "constr-01",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "602.4.2"
+      ],
+      "confidence": 0.655,
+      "latency_s": 3.01,
+      "answer": "A cross-laminated timber (CLT) exterior wall must be at least 6 inches (152.4 mm) thick and have a 2-hour fire-resistance rating or less. The exterior surface of the CLT must be protected by one of the following: fire-retardant-treated wood sheathing complying with Section 2303.2 and not less than 15/32 inch (11.9 mm) thick, Type X gypsum board not less than 5/8 inch (15.9 mm) thick, or a noncombustible material (\u00a7602.4.2).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer includes all key facts from the reference answer and is supported by \u00a7602.4.2."
+    },
+    {
+      "id": "fireres-01",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "705.8.5"
+      ],
+      "confidence": 0.621,
+      "latency_s": 2.79,
+      "answer": "Windows on adjacent stories that are within 5 feet horizontally must be separated vertically by at least 3 feet. This separation can be achieved using spandrel girders, exterior walls, or similar assemblies with a fire-resistance rating of at least 1 hour, or by flame barriers extending at least 30 inches horizontally beyond the exterior wall, also with a 1-hour fire-resistance rating (\u00a7705.8.5).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the requirements of \u00a7705.8.5 regarding vertical separation of windows."
+    },
+    {
+      "id": "fireres-02",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "705.8.1"
+      ],
+      "confidence": 0.865,
+      "latency_s": 3.05,
+      "answer": "Unlimited unprotected openings are allowed in the first story above grade plane in buildings other than Group H occupancies if either of the following conditions are met: 1) the wall faces a street and has a fire separation distance of more than 15 feet (\u00a7705.8.1 Exception 1.1), or 2) the wall faces an unoccupied space that is on the same tax lot or dedicated for public use, is not less than 30 feet in width, and has access from a street by a posted fire lane in accordance with the New York City Fire Code (\u00a7705.8.1 Exception 1.2). Additionally, buildings whose exterior bearing walls, exterior nonbearing walls, and exterior primary structural frame are not required to be fire-resistance-rated are permitted to have unlimited unprotected openings (\u00a7705.8.1 Exception 2).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": false,
+      "judge_reason": "The assistant's answer includes an additional condition not mentioned in the reference answer."
+    },
+    {
+      "id": "fireres-03",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "704.13.3.2"
+      ],
+      "confidence": 0.793,
+      "latency_s": 4.99,
+      "answer": "Sprayed fireproofing can be applied over painted steel beams if certain conditions are met. According to \u00a7704.13.3.2, the sprayed fire-resistant material (SFRM) must be field tested in accordance with ASTM E 736 to ensure that the required adhesion is maintained. If the testing demonstrates adequate adhesion, the SFRM can be applied to painted steel beams, provided that the beam flange width does not exceed 12 inches (\u00a7704.13.3.2). Additionally, the average bond strength must be at least 80 percent, and the individual bond strength must be at least 50 percent of the bond strength of the SFRM applied to clean, uncoated steel (\u00a7704.13.3.2).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer includes all key facts from the reference answer and is supported by the provided sections."
+    },
+    {
+      "id": "occ-01",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "303.4",
+        "305.1"
+      ],
+      "confidence": 0.939,
+      "latency_s": 3.1,
+      "answer": "A classroom is classified as an Assembly Group A-3 occupancy if it has 75 persons or more. If it has fewer than 75 persons, it is classified as either a Business Group B or Educational Group E occupancy, depending on the context (\u00a7303.4, \u00a7305.1).",
+      "citation_recall": 0.5,
+      "citation_precision": 0.5,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer correctly states that 75 persons or more classifies a classroom as Group A-3, and fewer than 75 as Group B or E, aligning with the reference answer."
+    },
+    {
+      "id": "occ-02",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "307.4",
+        "307.5"
+      ],
+      "confidence": 0.947,
+      "latency_s": 3.06,
+      "answer": "The code distinguishes H-2 from H-3 hazard materials in terms of pressure by specifying that H-2 includes materials such as Class I, II, or IIIA flammable or combustible liquids that are used or stored in normally open containers or systems, or in closed containers or systems pressurized at more than 15 pounds per square inch gauge (103.4 kPa) (\u00a7307.4). In contrast, H-3 includes materials such as Class I, II, or IIIA flammable or combustible liquids that are used or stored in normally closed containers or systems pressurized at 15 pounds per square inch gauge (103 kPa) or less (\u00a7307.5).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the pressure distinctions for H-2 and H-3 as described in the provided sections."
+    },
+    {
+      "id": "occ-03",
+      "answerable": true,
+      "abstained": false,
+      "abstain_correct": true,
+      "cited": [
+        "308.3.1"
+      ],
+      "confidence": 0.852,
+      "latency_s": 2.42,
+      "answer": "An adult home offering 24-hour care is generally classified as Group I-1 if the occupants are capable of self-preservation (\u00a7308.3.1). However, if the facility offers supervised care on a 24-hour basis for no more than 16 occupants who are capable of self-preservation, it may be classified in Group R in accordance with Section 310 (\u00a7308.3.1 Exception).",
+      "citation_recall": 1.0,
+      "citation_precision": 1.0,
+      "citation_grounded": 1.0,
+      "citation_referenced": 0.0,
+      "retrieval_hit": 1.0,
+      "faithful": true,
+      "correct": true,
+      "judge_reason": "The assistant's answer accurately reflects the classification rules for adult homes with 24-hour care as stated in \u00a7308.3.1 and its exception."
+    },
+    {
+      "id": "none-01",
+      "answerable": false,
+      "abstained": true,
+      "abstain_correct": true,
+      "cited": [],
+      "confidence": 0.485,
+      "latency_s": 2.06,
+      "answer": "The retrieved code sections do not contain sufficient information to answer this question. Please consult a NY-licensed professional or search additional code sections."
+    },
+    {
+      "id": "none-02",
+      "answerable": false,
+      "abstained": true,
+      "abstain_correct": true,
+      "cited": [],
+      "confidence": 0.404,
+      "latency_s": 1.83,
+      "answer": "The retrieved code sections do not contain sufficient information to answer this question. Please consult a NY-licensed professional or search additional code sections."
+    },
+    {
+      "id": "none-03",
+      "answerable": false,
+      "abstained": true,
+      "abstain_correct": true,
+      "cited": [],
+      "confidence": 0.514,
+      "latency_s": 2.29,
+      "answer": "The retrieved code sections do not contain sufficient information to answer this question. Please consult a NY-licensed professional or search additional code sections."
+    },
+    {
+      "id": "none-04",
+      "answerable": false,
+      "abstained": true,
+      "abstain_correct": true,
+      "cited": [],
+      "confidence": 0.32,
+      "latency_s": 1.94,
+      "answer": "The retrieved code sections do not contain sufficient information to answer this question. Please consult a NY-licensed professional or search additional code sections."
+    },
+    {
+      "id": "none-05",
+      "answerable": false,
+      "abstained": true,
+      "abstain_correct": true,
+      "cited": [],
+      "confidence": 0.394,
+      "latency_s": 1.92,
+      "answer": "The retrieved code sections do not contain sufficient information to answer this question. Please consult a NY-licensed professional or search additional code sections."
+    }
+  ]
+}

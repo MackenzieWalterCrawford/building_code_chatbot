@@ -64,7 +64,7 @@ class TestCitationScores:
 
     def test_perfect(self):
         s = citation_scores(["1011.6"], ["1011.6"], self.retrieved)
-        assert s == {"recall": 1.0, "precision": 1.0, "grounded": 1.0}
+        assert s == {"recall": 1.0, "precision": 1.0, "grounded": 1.0, "referenced": 0.0}
 
     def test_strips_section_symbol(self):
         assert citation_scores(["§1011.6"], ["1011.6"], self.retrieved)["recall"] == 1.0
@@ -73,6 +73,20 @@ class TestCitationScores:
         s = citation_scores(["1011.6", "9999.9"], ["1011.6"], self.retrieved)
         assert s["precision"] == 0.5
         assert s["grounded"] == 0.5
+        assert s["referenced"] == 0.0
+
+    def test_inline_child_counts_as_grounded(self):
+        parent = [chunk("1025.6", "1025.6 General.\n1025.6.1 Design of door signs.")]
+        assert citation_scores(["1025.6.1"], ["1025.6.1"], parent)["grounded"] == 1.0
+
+    def test_cross_reference_is_referenced_not_grounded(self):
+        ctx = [chunk("1026.2", "separation shall be a fire barrier complying with Section 707.")]
+        s = citation_scores(["1026.2", "707"], ["1026.2"], ctx)
+        assert s["grounded"] == 0.5 and s["referenced"] == 0.5
+
+    def test_reference_does_not_match_longer_number(self):
+        ctx = [chunk("1.1", "see Section 7071.2 and 707.10")]
+        assert citation_scores(["707"], [], ctx)["referenced"] == 0.0
 
     def test_no_citations(self):
         s = citation_scores([], ["1011.6"], self.retrieved)

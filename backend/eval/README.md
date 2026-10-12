@@ -47,3 +47,40 @@ and should be spot-checked by a human; `--validate` only confirms that each gold
 - The judge defaults to the same provider/model as the generator, which biases toward
   agreement. Spot-check `judge_reason` entries, or set a different `LLM_PROVIDER` for the judge run.
 - Unanswerable cases only test refusal on clearly out-of-scope questions, not subtle near-misses.
+
+## Results (2026-10-12, 31 answerable + 5 unanswerable questions, 4,411-chunk corpus)
+
+Embeddings: `text-embedding-3-large`. Generator and judge: GPT-4o.
+
+**Retrieval**
+
+| alpha | mode | hit@1 | hit@3 | hit@5 | hit@8 | MRR |
+|---|---|---|---|---|---|---|
+| 0.0 | BM25 only | 0.52 | 0.74 | 0.81 | 0.87 | 0.641 |
+| 0.25 | hybrid | 0.71 | 0.84 | 0.94 | 0.94 | 0.781 |
+| 0.5 | hybrid | 0.74 | 0.90 | 0.94 | 1.00 | 0.841 |
+| 0.75 | hybrid (default) | 0.87 | 1.00 | 1.00 | 1.00 | 0.930 |
+| 1.0 | dense only | 0.87 | 1.00 | 1.00 | 1.00 | 0.935 |
+
+Dense and hybrid at alpha 0.75 are statistically indistinguishable on this set; both clearly beat
+BM25-only. This set does not show a benefit from hybrid over dense. A larger set with more
+keyword-heavy queries (section numbers, defined terms) is needed to test that.
+
+**Answers (alpha 0.75, top_k 8)**
+
+| metric | value |
+|---|---|
+| answered when answerable | 31/31 |
+| abstained when unanswerable | 5/5 |
+| citation recall | 0.98 |
+| citation precision | 0.87 |
+| citations grounded in retrieved context | 0.99 |
+| judge: faithful | 0.97 |
+| judge: correct | 0.84 |
+| median latency (retrieve + generate) | 2.5 s |
+
+Notes on `correct`: two runs of the same configuration scored 0.84 both times but with different
+questions failing, so the judge is noisy at this sample size. On inspection, most misses were the
+judge penalizing answers for omitting secondary details from the reference that the question did
+not ask for. Roughly one of the five was a real incomplete answer (fire-01 gave the 48" maximum
+without the 42" minimum).

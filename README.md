@@ -176,6 +176,49 @@ cd backend
 pytest tests/ -v
 ```
 
+## Evaluation
+
+`backend/eval/` contains a labeled question set (36 questions: 31 answerable, 5 that should be
+refused) and a harness that measures retrieval and answer quality. See
+[`backend/eval/README.md`](backend/eval/README.md) for the metric definitions and caveats.
+
+```bash
+cd backend
+python eval/run_eval.py --retrieval                  # dense vs BM25 vs hybrid sweep
+python eval/run_eval.py --answers --judge            # citations, abstention, LLM-as-judge
+```
+
+Results (2026-10-12; `text-embedding-3-large`, GPT-4o as generator and judge):
+
+**Retrieval** — share of questions where a gold section appears in the top *k* results
+
+| alpha | mode | hit@1 | hit@3 | hit@5 | hit@8 | MRR |
+|---|---|---|---|---|---|---|
+| 0.0 | BM25 only | 0.52 | 0.74 | 0.81 | 0.87 | 0.641 |
+| 0.25 | hybrid | 0.71 | 0.84 | 0.94 | 0.94 | 0.781 |
+| 0.5 | hybrid | 0.74 | 0.90 | 0.94 | 1.00 | 0.841 |
+| 0.75 | hybrid (default) | 0.87 | 1.00 | 1.00 | 1.00 | 0.930 |
+| 1.0 | dense only | 0.87 | 1.00 | 1.00 | 1.00 | 0.935 |
+
+**Answers** (alpha 0.75, top_k 8)
+
+| metric | value |
+|---|---|
+| answered when answerable | 31/31 |
+| refused when out of scope | 5/5 |
+| citation recall / precision | 0.98 / 0.87 |
+| citations grounded in retrieved text | 0.99 |
+| judged faithful | 0.97 |
+| judged correct | 0.84 |
+| median latency (retrieve + generate) | 2.5 s |
+
+Read these with the sample size in mind: 31 answerable questions separates BM25 from dense/hybrid
+clearly, but dense (α=1.0) and hybrid (α=0.75) are indistinguishable here, so this set does not
+show hybrid retrieval outperforming dense. The `correct` score is judge-dependent and varied
+between runs in which questions failed; most misses were the judge penalizing omitted secondary
+details from the reference answer. The gold set was drafted with LLM assistance and should be
+spot-checked.
+
 ## Known limitations
 
 - PDFs must be text-readable (not scanned images); the 2022 WBwm PDFs are.

@@ -60,14 +60,17 @@ def citation_scores(
     """
     Answer-level citation quality.
 
-    recall    — fraction of gold sections the answer cites
-    precision — fraction of cited sections that are gold
-    grounded  — fraction of cited sections that were actually in the
-                retrieved context (a citation outside the context is a
-                fabricated or leaked-from-memory citation)
+    recall     — fraction of gold sections the answer cites
+    precision  — fraction of cited sections that are gold
+    grounded   — fraction of cited sections that are a heading in the
+                 retrieved context (chunk section, descendant, or inline)
+    referenced — fraction of cited sections that are NOT headings in the
+                 context but are mentioned in its text (a cross-reference
+                 such as "in accordance with Section 707")
+    The remainder (1 - grounded - referenced) is citations with no support
+    in the retrieved context at all.
     """
     cited = [c.strip().lstrip("§") for c in cited if c and c.strip()]
-    retrieved_sections = {c["section_number"] for c in retrieved}
 
     def is_gold(c: str) -> bool:
         return any(c == g or c.startswith(g + ".") or g.startswith(c + ".") for g in gold_sections)
@@ -75,10 +78,21 @@ def citation_scores(
     def covered(g: str) -> bool:
         return any(c == g or c.startswith(g + ".") or g.startswith(c + ".") for c in cited)
 
+    def is_grounded(c: str) -> bool:
+        return any(section_matches(c, ch["section_number"], ch.get("text", "")) for ch in retrieved)
+
+    def is_referenced(c: str) -> bool:
+        pat = re.compile(rf"(?<![\d.]){re.escape(c)}(?![\d]|\.\d)")
+        return any(pat.search(ch.get("text", "")) for ch in retrieved)
+
+    grounded = [is_grounded(c) for c in cited]
+    referenced = [(not g) and is_referenced(c) for c, g in zip(cited, grounded)]
+    n = len(cited)
     return {
         "recall": (sum(covered(g) for g in gold_sections) / len(gold_sections)) if gold_sections else None,
-        "precision": (sum(is_gold(c) for c in cited) / len(cited)) if cited else None,
-        "grounded": (sum(c in retrieved_sections for c in cited) / len(cited)) if cited else None,
+        "precision": (sum(is_gold(c) for c in cited) / n) if n else None,
+        "grounded": (sum(grounded) / n) if n else None,
+        "referenced": (sum(referenced) / n) if n else None,
     }
 
 

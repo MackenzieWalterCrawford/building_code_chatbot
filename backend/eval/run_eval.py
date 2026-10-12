@@ -148,7 +148,9 @@ def _judge(question: str, reference: str, answer: str, chunks: list[dict]):
     system = (
         "You grade answers from a building-code assistant. Judge strictly. "
         "'faithful' = all claims are supported by the provided sections (no outside knowledge). "
-        "'correct' = the answer's key facts match the reference answer."
+        "'correct' = the answer states the reference answer's key fact(s) and does not contradict them. "
+        "The reference is deliberately brief, not exhaustive: extra provisions are NOT errors if they "
+        "are supported by the provided sections; only mark incorrect for a missing key fact or a contradiction."
     )
     user = (f"Sections:\n{context}\n\nQuestion: {question}\n\nReference answer: {reference}\n\n"
             f"Assistant answer: {answer}")
@@ -218,6 +220,7 @@ def run_answers(gold: list[dict], alpha: float, top_k: int, use_judge: bool) -> 
         "citation_recall": mean(r.get("citation_recall") for r in ans),
         "citation_precision": mean(r.get("citation_precision") for r in ans),
         "citation_grounded": mean(r.get("citation_grounded") for r in ans),
+        "citation_referenced": mean(r.get("citation_referenced") for r in ans),
         "median_latency_s": sorted(r["latency_s"] for r in rows)[len(rows) // 2],
     }
     judged = [r for r in ans if "faithful" in r]
