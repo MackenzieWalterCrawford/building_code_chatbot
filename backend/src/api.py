@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -18,9 +19,14 @@ from typing import Optional
 
 import weaviate
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+# Sibling modules (generate, retrieve, ...) are imported as top-level names. Docker
+# gets this via PYTHONPATH=/app/src; put src/ on the path here so the Vercel
+# service (entrypoint src.api:app) resolves them too.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from generate import generate
 from logger import log_interaction
@@ -118,12 +124,15 @@ class ChapterInfo(BaseModel):
 # Endpoints
 # ---------------------------------------------------------------------------
 
-@app.get("/health")
+router = APIRouter()
+
+
+@router.get("/health")
 def health():
     return {"status": "ok"}
 
 
-@app.get("/chapters", response_model=list[ChapterInfo])
+@router.get("/chapters", response_model=list[ChapterInfo])
 def chapters():
     """List distinct chapters in the store, for a frontend filter dropdown."""
     collection = _wv_client.collections.get(COLLECTION_NAME)
@@ -140,7 +149,7 @@ def chapters():
     ]
 
 
-@app.post("/ask", response_model=AskResponse)
+@router.post("/ask", response_model=AskResponse)
 def ask(req: AskRequest):
     t0 = time.perf_counter()
 
@@ -187,3 +196,9 @@ def ask(req: AskRequest):
         confidence=result.confidence,
         insufficient=result.insufficient,
     )
+
+
+# Vercel forwards the original request path (no prefix stripping), so the public
+# routes live under /api. The bare paths stay for local/docker use and curl.
+app.include_router(router, prefix="/api")
+app.include_router(router, include_in_schema=False)

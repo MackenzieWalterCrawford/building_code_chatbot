@@ -60,8 +60,20 @@ def _split_host_port(url: str, default_port: int) -> tuple[str, int]:
     return hostpart, default_port
 
 
+def _is_weaviate_cloud(url: str) -> bool:
+    return any(d in url for d in (".weaviate.cloud", ".weaviate.network"))
+
+
 def get_weaviate_client() -> weaviate.WeaviateClient:
     """Return a connected Weaviate client."""
+    if WEAVIATE_API_KEY and _is_weaviate_cloud(WEAVIATE_URL):
+        # Weaviate Cloud serves gRPC from a separate "grpc-<cluster>" host,
+        # which connect_to_weaviate_cloud derives for us.
+        cluster_url = WEAVIATE_URL if "://" in WEAVIATE_URL else f"https://{WEAVIATE_URL}"
+        return weaviate.connect_to_weaviate_cloud(
+            cluster_url=cluster_url,
+            auth_credentials=weaviate.auth.AuthApiKey(WEAVIATE_API_KEY),
+        )
     if WEAVIATE_API_KEY:
         auth = weaviate.auth.AuthApiKey(WEAVIATE_API_KEY)
         host, http_port = _split_host_port(WEAVIATE_URL, default_port=443)

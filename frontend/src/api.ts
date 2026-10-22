@@ -17,7 +17,9 @@ export interface AskResponse {
   insufficient: boolean
 }
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+// Same-origin /api on Vercel (rewritten to the backend service); set VITE_API_URL
+// to point at a standalone backend for local dev.
+const API_URL = import.meta.env.VITE_API_URL ?? '/api'
 
 export async function askQuestion(question: string): Promise<AskResponse> {
   const res = await fetch(`${API_URL}/ask`, {
