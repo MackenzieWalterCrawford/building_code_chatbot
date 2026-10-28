@@ -59,6 +59,29 @@ PDF files (backend/data/raw/)
 React (`frontend/`) calls `api.py` over HTTP — see `frontend/README.md` for
 the request/response contract.
 
+## Chunking strategy
+
+The Building Code is a legal document with its own numbering, so chunks follow
+that structure rather than a fixed window size. This is **structure-aware
+(hierarchical) chunking** with size-based fallbacks (`backend/src/ingest.py`):
+
+1. **One chunk per numbered section.** Section boundaries are detected from the
+   code's numbering (`CHAPTER N`, `NNNN`, `NNNN.N`, `NNNN.N.N`, `NNNN.N.N.N`),
+   so a provision is never cut in half and every chunk can be cited by section number.
+2. **Merge small sections.** Sections under `CHUNK_MIN_TOKENS` (100) are merged
+   into their parent section to avoid context-poor fragments.
+3. **Split oversized sections.** Sections over `CHUNK_MAX_TOKENS` (1024) are split,
+   aiming for `CHUNK_TARGET_TOKENS` (768) per piece: first on paragraph
+   boundaries, then on sentences, and as a last resort by token count.
+4. **Metadata on every chunk.** `code_name`, `edition`, `source_file`, `chapter`,
+   `chapter_title`, `section_number`, `section_title`, `parent_section`,
+   `page_start`, `page_end`, `token_count`, `split_index`. This powers citations
+   and the chapter filter.
+
+Trade-offs: chunk sizes vary, there is no overlap between chunks, and
+cross-references ("see Section 1607.5") are not followed at retrieval time.
+Text is extracted per page with PyMuPDF; tables and figures are not structured.
+
 ## Setup
 
 ### 1. Prerequisites
